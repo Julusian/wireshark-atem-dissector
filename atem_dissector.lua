@@ -740,6 +740,9 @@ pf_fields["pf_flag_cmd_ramp_setmask27_all"] = ProtoField.new ("All", "atem.cmd.r
 pf_fields["pf_flag_cmd_ramp_setmask27_inputs"] = ProtoField.new ("Inputs", "atem.cmd.ramp.setmask27.flags.inputs", ftypes.BOOLEAN, {"On","Off"}, 4, 0x2)
 pf_fields["pf_flag_cmd_ramp_setmask27_master"] = ProtoField.new ("Master", "atem.cmd.ramp.setmask27.flags.master", ftypes.BOOLEAN, {"On","Off"}, 4, 0x4)
 pf_fields["pf_flag_cmd_ramp_setmask27_monitor"] = ProtoField.new ("Monitor", "atem.cmd.ramp.setmask27.flags.master", ftypes.BOOLEAN, {"On","Off"}, 4, 0x8)
+pf_fields["pf_cmd_camt_setmask"]  = ProtoField.new  ("Set Mask", "atem.cmd.camt.setmask", ftypes.UINT8, nil, base.DEC, 0x1)
+pf_fields["pf_flag_cmd_camt_setmask_mutesdi"] = ProtoField.new ("Mute SDI", "atem.cmd.camt.setmask.flags.mutesdi", ftypes.BOOLEAN, {"On","Off"}, 1, 0x1)
+pf_fields["pf_field_mutesdi"] = ProtoField.new  ("Mute SDI Talkback", "atem.field.sources1", ftypes.BOOLEAN, {"On","Off"}, 1, 0x1)
 
 VALS["VALS_RAMP_INPUTSOURCE1"] = {[1] = "Input 1", [2] = "Input 2", [3] = "Input 3", [4] = "Input 4", [5] = "Input 5", [6] = "Input 6", [7] = "Input 7", [8] = "Input 8", [9] = "Input 9", [10] = "Input 10", [11] = "Input 11", [12] = "Input 12", [13] = "Input 13", [14] = "Input 14", [15] = "Input 15", [16] = "Input 16", [17] = "Input 17", [18] = "Input 18", [19] = "Input 19", [20] = "Input 20", [1001] = "XLR", [1101] = "AES/EBU", [1201] = "RCA", [2001] = "MP1", [2002] = "MP2"}
 pf_fields["pf_cmd_ramp_inputsource1"]   = ProtoField.new  ("Input Source", "atem.cmd.ramp.inputsource1", ftypes.UINT16, VALS["VALS_RAMP_INPUTSOURCE1"], base.DEC)
@@ -918,6 +921,8 @@ cmd_labels["SALN"] = "Audio Levels"
 cmd_labels["AMLv"] = "Audio Mixer Levels"
 cmd_labels["RAMP"] = "Reset Audio Mixer Peaks"
 cmd_labels["AMTl"] = "Audio Mixer Tally"
+cmd_labels["AMTP"] = "Audio Talkback Properties"
+cmd_labels["CAMT"] = "Audio Talkback Properties"
 cmd_labels["TlIn"] = "Tally By Index"
 cmd_labels["TlSr"] = "Tally By Source"
 cmd_labels["Time"] = "Last State Change Time Code"
@@ -956,6 +961,7 @@ atem_proto.fields = {
   , pf_fields["pf_cmd_ftdc_id"]
   , pf_fields["pf_cmd_ftfd_id"], pf_fields["pf_cmd_ftfd_filename"], pf_fields["pf_cmd_ftfd_hash"]
   , pf_fields["pf_field_afv"]
+  , pf_fields["pf_cmd_camt_setmask"], pf_fields["pf_flag_cmd_camt_setmask_mutesdi"], pf_fields["pf_field_mutesdi"]
   }
 
 ----------------------------------------
@@ -2418,6 +2424,12 @@ function atem_proto.dissector(tvbuf,pktinfo,root)
 			cmd_tree:add(pf_fields["pf_field_unknown1"], tvbuf:range(pos+12, 4))
 		elseif (cmd_name == "AMTl") then
 			cmd_tree:add(pf_fields["pf_field_sources1"], tvbuf:range(pos+8, 2))
+		elseif (cmd_name == "AMTP") then
+			cmd_tree:add(pf_fields["pf_field_mutesdi"], tvbuf:range(pos+8, 1))
+		elseif (cmd_name == "CAMT") then
+			local cmd_camt_setmask_tree = cmd_tree:add(pf_fields["pf_cmd_camt_setmask"], tvbuf:range(pos+8, 1))
+			cmd_camt_setmask_tree:add(pf_fields["pf_flag_cmd_camt_setmask_mutesdi"], tvbuf:range(pos+8, 1))
+			cmd_tree:add(pf_fields["pf_field_mutesdi"], tvbuf:range(pos+9, 1))
 		elseif (cmd_name == "TlIn") then
 			cmd_tree:add(pf_fields["pf_field_sources1"], tvbuf:range(pos+8, 2))
 		elseif (cmd_name == "TlSr") then
